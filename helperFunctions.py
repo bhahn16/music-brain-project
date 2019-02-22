@@ -9,6 +9,9 @@ Created on Fri Feb  1 19:51:13 2019
 All helper functions: -aphabetical or chronological???
 """
 import numpy as np
+import nilearn
+from nilearn import image
+from nilearn.input_data import NiftiMasker
 
 def sliderPre(filename,method):
     """
@@ -42,4 +45,23 @@ def sliderPre(filename,method):
             outputarray.append(np.average(fullarray))
         elif methodselector==4:
             outputarray.append(np.median(fullarray))
+    content.close()
     return outputarray
+    
+
+def niiToTS(filename):
+    """
+    Takes 4D .nii file and makes it into a 2D time series
+    """
+    nifti_masker=nilearn.input_data.NiftiMasker(standardize=True, mask_strategy='background',smoothing_fwhm=8)
+    nifti_masker.fit(filename)
+    masked=nifti_masker.transform(filename)
+    return masked
+    
+
+def inputtoLSTM(label_data,train_data):
+    """
+    Takes label data array and training data array, both with same number of time dimesions
+    and prepares them for the LSTM
+    """
+    
