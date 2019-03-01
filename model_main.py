@@ -100,11 +100,11 @@ train_subset_labels,test_subset_labels,train_subset_nii,test_subset_nii=train_te
 THE MODEL HERSELF (11/10 dont tell my girlfriend)
 --------------------------------------
 """
-MAX_SLIDER_VALUE=127
+MAX_SLIDER_VALUE=495
 model=Sequential()
 
-model.add(LSTM(MAX_SLIDER_VALUE,dropout=.08,input_shape=(495,359320)))
-model.add(Activation(keras.layers.LeakyReLU(alpha=.025)) )
+model.add(LSTM(units=MAX_SLIDER_VALUE, activation=keras.layers.LeakyReLU(alpha=.025),dropout=.08,input_shape=(495,359320)))
+#model.add(Dense(127))
 
 ###########################
 LOSS='mean_squared_error'
