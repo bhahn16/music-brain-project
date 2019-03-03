@@ -20,13 +20,18 @@ import nilearn
 import os
 from sklearn.model_selection import train_test_split
 
-server=False
+server=True
 if server:
-    DATA_PATH_FOR_NII=os.path.abspath(~/home/bhan/data/nifti)
-    DATA_PATH_FOR_LABELS=os.path.abspath(~/home/bhan/data/text)
+    DATA_PATH_FOR_NII=os.getcwd()+"\\data\\nifti\\"
+    DATA_PATH_FOR_LABELS=os.getcwd()+"\\data\\text\\"
 else:
     DATA_PATH_FOR_LABELS=r"C:\Users\Ted\Desktop\CAIS_MUSIC_BRAIN\TXT-Files"
     DATA_PATH_FOR_NII=r"C:\Users\Ted\Desktop\CAIS_MUSIC_BRAIN\NII-Files"
+print(os.getcwd())
+
+print(DATA_PATH_FOR_LABELS)
+print(DATA_PATH_FOR_NII)
+'''
 """
 --------------------------------------
 Data Preprocessing 
@@ -107,3 +112,4 @@ print(model.summary())
 Data Visualization/Results/Extra Modifications
 --------------------------------------
 """
+'''
