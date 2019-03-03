@@ -27,15 +27,16 @@ def sliderPre(filename,method):
     
     times=[]
     sliderValue=[]
-    
+    #import pdb; pdb.set_trace()
     for i in range(0,len(content1)-1):
         times.append(content1[i].split("\t")[0])
         sliderValue.append(content1[i].split("\t")[1])  
     
-    
+
+
     outputarray=[]
     methodselector=method
-    for i in range(0,515):
+    for i in range(20,515):
         fullarray=np.array(sliderValue[30*i:30*i+29]).astype(np.float)
         if methodselector==1:
             outputarray.append(max(fullarray))
@@ -56,7 +57,12 @@ def niiToTS(filename):
     nifti_masker=nilearn.input_data.NiftiMasker(standardize=True, mask_strategy='background',smoothing_fwhm=8)
     nifti_masker.fit(filename)
     masked=nifti_masker.transform(filename)
-    return masked
+    masked=np.array(masked)
+    newmasked=np.zeros((495,359320))
+    for i in range(495):
+        for j in range(masked.shape[1]):
+            newmasked[i][j]=masked[i][j]
+    return newmasked
     
 
 def inputtoLSTM(label_data,train_data):
