@@ -110,7 +110,7 @@ THE MODEL HERSELF (11/10 dont tell my girlfriend)
 MAX_SLIDER_VALUE=127
 EPOCHS=1
 BATCH_SIZE=1
-LOSS='mean_squared_error'
+LOSS='binary_crossentropy'
 OPTIMIZER='RMSprop'
 
 
