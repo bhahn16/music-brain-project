@@ -12,6 +12,7 @@ import numpy as np
 import nilearn
 from nilearn import image
 from nilearn.input_data import NiftiMasker
+from sklearn.preprocessing import OneHotEncoder
 
 def sliderPre(filename,method):
     """
@@ -33,19 +34,24 @@ def sliderPre(filename,method):
         sliderValue.append(content1[i].split("\t")[1])  
     
 
-
+    maxValue=127
     outputarray=[]
     methodselector=method
     for i in range(20,515):
         fullarray=np.array(sliderValue[30*i:30*i+29]).astype(np.float)
         if methodselector==1:
-            outputarray.append(max(fullarray))
+            outputarray.append(max(fullarray)/maxValue)
         elif methodselector==2:
-            outputarray.append(min(fullarray))
+            outputarray.append(min(fullarray)/maxValue)
         elif methodselector==3:
-            outputarray.append(np.average(fullarray))
+            num=np.average(fullarray)
+            if num>maxValue/2:
+                toOut=[0,1]
+            else:
+                toOut=[1,0]
+            outputarray.append(toOut)
         elif methodselector==4:
-            outputarray.append(np.median(fullarray))
+            outputarray.append(np.median(fullarray)/maxValue)
     content.close()
     return outputarray
     
@@ -58,16 +64,30 @@ def niiToTS(filename):
     nifti_masker.fit(filename)
     masked=nifti_masker.transform(filename)
     masked=np.array(masked)
+    #np.pad(masked,(0,359320-masked.shape[1]),'constant')
+    
+    
     newmasked=np.zeros((495,359320))
+    #redo this with np.pad
     for i in range(495):
         for j in range(masked.shape[1]):
             newmasked[i][j]=masked[i][j]
+            
+   # boole=np.array_equal(newmasked,masked)
+   #  print(boole)
     return newmasked
     
 
-def inputtoLSTM(label_data,train_data):
+def savePreNii(filename,outputname):
     """
-    Takes label data array and training data array, both with same number of time dimesions
-    and prepares them for the LSTM
+    Saves a preprocessed nii file to an outputfile
     """
+    toSave=niiToTS(filename)
+    np.save(outputname,toSave)
+def loadPreNii(filename):
+    """
+    Loads a preprocessed NII file from savePreNii
+    """
+    return np.load(filename)
+
     

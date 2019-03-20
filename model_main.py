@@ -20,19 +20,17 @@ import nilearn
 import os
 from sklearn.model_selection import train_test_split
 
-server=True
+server=False
 if server:
-    DATA_PATH_FOR_NII=os.getcwd()+"\\data\\nifti\\"
-    DATA_PATH_FOR_LABELS=os.getcwd()+"\\data\\text\\"
+    DATA_PATH_FOR_NII=os.getcwd()+"/data/nifti/"
+    DATA_PATH_FOR_LABELS=os.getcwd()+"/data/text/"
 else:
     DATA_PATH_FOR_LABELS=r"C:\Users\Ted\Desktop\CAIS_MUSIC_BRAIN\TXT-Files"
     DATA_PATH_FOR_NII=r"C:\Users\Ted\Desktop\CAIS_MUSIC_BRAIN\NII-Files"
-print(os.getcwd())
+    DATA_PATH_FOR_PRENII=r"C:\Users\Ted\Desktop\CAIS_MUSIC_BRAIN\Preprocessed_Files"
 
-print(DATA_PATH_FOR_LABELS)
-print(DATA_PATH_FOR_NII)
+
 '''
-"""
 --------------------------------------
 Data Preprocessing 
 i.e. Everything before model=Sequential()
@@ -45,23 +43,27 @@ filename=os.path.join(DATA_PATH_FOR_LABELS,"sub-01_snl_l_enjoy_log.txt")
 print(filename)
 out=np.array(hf.sliderPre(filename,3))
 print(out.shape)
+print(out)
 
 
 Preprocessing the nii files to Time Series data
 More on the Nifti Masker function used to accomplish this
 http://nilearn.github.io/modules/generated/nilearn.input_data.NiftiMasker.html
-
-
+'''
+'''
 niiname=os.path.join(DATA_PATH_FOR_NII,"sub-01_sadln_filtered_func_200hpf_cut20_standard.nii")
+hf.savePreNii(niiname,"testingsave")
+timeseries=hf.loadPreNii("testingsave.npy")
+print(timeseries.shape)
+
 timeSeries=hf.niiToTS(niiname)
 print(timeSeries.shape)
+'''
+
 #print(np.array(timeSeries)[1][1:10])
-  
+ 
 #import pdb; pdb.set_trace()
 
-#pd.DataFrame(np.array(train_subset_labels)).to_csv(os.path.join(DATA_PATH_FOR_LABELS,"preprocessed_labels.csv"),header=None,index=None)
-#pd.DataFrame(np.array(train_subset_nii)).to_csv(os.path.join(DATA_PATH_FOR_NII,"preprocessed_nii.csv"),header=None,index=None)
-"""
 
 
 #Takes all the names of the label files and preprocesses them into data for the
@@ -73,10 +75,20 @@ for f in os.listdir(DATA_PATH_FOR_LABELS):
 label_array=np.array(label_array)
 #Takes all the names of the nii files and preprocesses them into data for the
 #LSTM
+'''
+'''
+saving=False
 nii_array=[]
+count=0
 for f in os.listdir(DATA_PATH_FOR_NII):
-    nii_array.append(np.array(hf.niiToTS(os.path.join(DATA_PATH_FOR_NII,f))))
-
+    count+=1
+    if saving:
+        hf.savePreNii(os.path.join(DATA_PATH_FOR_NII,f),f + str(count))
+    else: 
+        nii_array.append(hf.loadPreNii(os.path.join(DATA_PATH_FOR_PRENII,f+str(count)+".npy")))
+        #nii_array.append(np.array(hf.niiToTS(os.path.join(DATA_PATH_FOR_NII,f))))
+    
+  
 
 
 #Global variable for percent to train on, test on and validate on
@@ -84,7 +96,10 @@ TRAIN_TEST_SPLIT=[.75,.25]
 totalFiles=len(label_array)
 
 train_subset_labels,test_subset_labels,train_subset_nii,test_subset_nii=train_test_split(label_array,nii_array,train_size=TRAIN_TEST_SPLIT[0],test_size=TRAIN_TEST_SPLIT[1])
-
+train_subset_labels=np.array(train_subset_labels)
+train_subset_nii=np.array(train_subset_nii)
+test_subset_labels=np.array(test_subset_labels)
+test_subset_nii=np.array(test_subset_nii)
 
 """
 --------------------------------------
@@ -93,23 +108,30 @@ THE MODEL HERSELF (11/10 dont tell my girlfriend)
 """
 #HyperParameters
 MAX_SLIDER_VALUE=127
-EPOCHS=3
+EPOCHS=1
 BATCH_SIZE=1
 LOSS='mean_squared_error'
 OPTIMIZER='RMSprop'
 
 
 model=Sequential()
-model.add(LSTM(units=MAX_SLIDER_VALUE, activation=keras.layers.LeakyReLU(alpha=.025),dropout=.08,input_shape=(495,359320)))
-model.add(Dense(units=MAX_SLIDER_VALUE,activation='softmax'))
-
+model.add(LSTM(units=495, activation=keras.layers.LeakyReLU(alpha=.025),dropout=.08,input_shape=(495,359320),return_sequences=True))
+#model.add(Dense(2,activation='softmax'))
+model.add(keras.layers.TimeDistributed(Dense(2,activation='softmax')))
+#import pdb; pdb.set_trace()
 model.compile(loss=LOSS,optimizer=OPTIMIZER, metrics=['acc','mae'])
-import pdb;pdb.set_trace()
-model.fit(np.array(train_subset_nii),np.array(train_subset_labels),epochs=EPOCHS,batch_size=BATCH_SIZE)
-print(model.summary())
+
+model.fit(train_subset_nii,train_subset_labels,epochs=EPOCHS,batch_size=BATCH_SIZE)
+
+#import pdb;pdb.set_trace()
 """
 --------------------------------------
 Data Visualization/Results/Extra Modifications
 --------------------------------------
 """
-'''
+print(model.summary())
+prediction=model.predict(test_subset_nii,verbose=1,batch_size=1)
+
+score=model.evaluate(test_subset_nii,test_subset_labels,verbose=1, batch_size=1)
+
+import pdb;pdb.set_trace()
