@@ -50,15 +50,19 @@ Preprocessing the nii files to Time Series data
 More on the Nifti Masker function used to accomplish this
 http://nilearn.github.io/modules/generated/nilearn.input_data.NiftiMasker.html
 '''
-'''
+
 niiname=os.path.join(DATA_PATH_FOR_NII,"sub-01_sadln_filtered_func_200hpf_cut20_standard.nii")
+'''
 hf.savePreNii(niiname,"testingsave")
 timeseries=hf.loadPreNii("testingsave.npy")
 print(timeseries.shape)
 
 timeSeries=hf.niiToTS(niiname)
 print(timeSeries.shape)
+
 '''
+
+
 
 #print(np.array(timeSeries)[1][1:10])
  
@@ -76,8 +80,10 @@ label_array=np.array(label_array)
 #Takes all the names of the nii files and preprocesses them into data for the
 #LSTM
 '''
+
 '''
 saving=False
+largeTrain=False
 nii_array=[]
 count=0
 for f in os.listdir(DATA_PATH_FOR_NII):
@@ -85,10 +91,13 @@ for f in os.listdir(DATA_PATH_FOR_NII):
     if saving:
         hf.savePreNii(os.path.join(DATA_PATH_FOR_NII,f),f + str(count))
     else: 
-        nii_array.append(hf.loadPreNii(os.path.join(DATA_PATH_FOR_PRENII,f+str(count)+".npy")))
-        #nii_array.append(np.array(hf.niiToTS(os.path.join(DATA_PATH_FOR_NII,f))))
+        if largeTrain:
+            nii_array.append(hf.loadPreNii(os.path.join(DATA_PATH_FOR_PRENII,f+str(count)+".npy")))
+        else:
+            outArray,sizeValue=(hf.otherNii(os.path.join(DATA_PATH_FOR_NII,f),1))
+            nii_array.append(np.array(outArray))
     
-  
+
 
 
 #Global variable for percent to train on, test on and validate on
@@ -112,10 +121,11 @@ EPOCHS=1
 BATCH_SIZE=1
 LOSS='binary_crossentropy'
 OPTIMIZER='RMSprop'
+inputShape=(495,sizeValue)
 
 
 model=Sequential()
-model.add(LSTM(units=495, activation=keras.layers.LeakyReLU(alpha=.025),dropout=.08,input_shape=(495,359320),return_sequences=True))
+model.add(LSTM(units=495, activation=keras.layers.LeakyReLU(alpha=.025),dropout=.08,input_shape=(495,20112),return_sequences=True))
 #model.add(Dense(2,activation='softmax'))
 model.add(keras.layers.TimeDistributed(Dense(2,activation='softmax')))
 #import pdb; pdb.set_trace()

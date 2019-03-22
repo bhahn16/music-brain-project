@@ -9,8 +9,11 @@ Created on Fri Feb  1 19:51:13 2019
 All helper functions: -aphabetical or chronological???
 """
 import numpy as np
+import os
 import nilearn
 from nilearn import image
+from nilearn.masking import compute_epi_mask
+from nilearn.plotting import plot_epi
 from nilearn.input_data import NiftiMasker
 from sklearn.preprocessing import OneHotEncoder
 
@@ -60,12 +63,15 @@ def niiToTS(filename):
     """
     Takes 4D .nii file and makes it into a 2D time series
     """
+
+         
+    #nifti_masker=nilearn.input_data.NiftiMasker(standardize=True, mask_strategy='epi')
     nifti_masker=nilearn.input_data.NiftiMasker(standardize=True, mask_strategy='background',smoothing_fwhm=8)
+   
     nifti_masker.fit(filename)
     masked=nifti_masker.transform(filename)
     masked=np.array(masked)
     #np.pad(masked,(0,359320-masked.shape[1]),'constant')
-    
     
     newmasked=np.zeros((495,359320))
     #redo this with np.pad
@@ -90,4 +96,20 @@ def loadPreNii(filename):
     """
     return np.load(filename)
 
-    
+def otherNii(filename,timepoint):
+    '''
+    Uses an EPI mask of the 3D image at the timepoint input as features
+    '''
+    DATA_PATH_FOR_NII=r"C:\Users\Ted\Desktop\CAIS_MUSIC_BRAIN\NII-Files"
+
+    niiname2=os.path.join(DATA_PATH_FOR_NII,"sub-01_sadln_filtered_func_200hpf_cut20_standard.nii")
+
+    #nilearn.plotting.show()
+    result=nilearn.image.index_img(niiname2,timepoint)
+    #print(result.shape)
+    #plot_epi(result)
+    mask_img=compute_epi_mask(result)
+    #nilearn.plotting.plot_roi(mask_img,result)
+    masked_data=nilearn.masking.apply_mask(filename,mask_img)
+    return masked_data,masked_data.shape[1]
+
