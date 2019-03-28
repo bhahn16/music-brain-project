@@ -81,7 +81,7 @@ def niiToTS(filename):
             
    # boole=np.array_equal(newmasked,masked)
    #  print(boole)
-    return newmasked
+    return newmasked,newmasked.shape[1]
     
 
 def savePreNii(filename,outputname):
@@ -104,12 +104,12 @@ def otherNii(filename,timepoint):
 
     niiname2=os.path.join(DATA_PATH_FOR_NII,"sub-01_sadln_filtered_func_200hpf_cut20_standard.nii")
 
-    #nilearn.plotting.show()
+    nilearn.plotting.show()
     result=nilearn.image.index_img(niiname2,timepoint)
-    #print(result.shape)
-    #plot_epi(result)
+    print(result.shape)
+    plot_epi(result)
     mask_img=compute_epi_mask(result)
-    #nilearn.plotting.plot_roi(mask_img,result)
+    nilearn.plotting.plot_roi(mask_img,result)
     masked_data=nilearn.masking.apply_mask(filename,mask_img)
     return masked_data,masked_data.shape[1]
 

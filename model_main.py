@@ -35,9 +35,9 @@ else:
 Data Preprocessing 
 i.e. Everything before model=Sequential()
 --------------------------------------
-Preprocessing the slider data from 10hz to 1hz to match fmri data
-maxpool=1, minpool=2,mean=3,median=4
-
+#########Label Preprocesssing#########
+Preprocessing the slider data from 30hz to 1hz to match fmri data
+For Argument #2: Maxpool=1, minpool=2,mean=3,median=4
 
 filename=os.path.join(DATA_PATH_FOR_LABELS,"sub-01_snl_l_enjoy_log.txt")
 print(filename)
@@ -45,14 +45,11 @@ out=np.array(hf.sliderPre(filename,3))
 print(out.shape)
 print(out)
 
-
+#########NII Preprocesssing#########
 Preprocessing the nii files to Time Series data
 More on the Nifti Masker function used to accomplish this
 http://nilearn.github.io/modules/generated/nilearn.input_data.NiftiMasker.html
-'''
 
-niiname=os.path.join(DATA_PATH_FOR_NII,"sub-01_sadln_filtered_func_200hpf_cut20_standard.nii")
-'''
 hf.savePreNii(niiname,"testingsave")
 timeseries=hf.loadPreNii("testingsave.npy")
 print(timeseries.shape)
@@ -60,41 +57,53 @@ print(timeseries.shape)
 timeSeries=hf.niiToTS(niiname)
 print(timeSeries.shape)
 
+For Specific ROI in Brain use OtherNII
+timeSeries=hf.otherNII(niiname)
+print(timeSeries.shape)
+
 '''
 
 
 
-#print(np.array(timeSeries)[1][1:10])
- 
-#import pdb; pdb.set_trace()
+niiname=os.path.join(DATA_PATH_FOR_NII,"sub-01_sadln_filtered_func_200hpf_cut20_standard.nii")
 
-
-
-#Takes all the names of the label files and preprocesses them into data for the
-#LSTM
+#Takes all the names of the label files and preprocesses them into data for the LSTM
 label_array=[]
+#Deciding whether to use enjoyment or sadness labels
+enjoy=False;
 for f in os.listdir(DATA_PATH_FOR_LABELS):
-    if "enjoy" not in f:
-        label_array.append(np.array(hf.sliderPre(os.path.join(DATA_PATH_FOR_LABELS,f),3)))
+    if enjoy:
+        if "enjoy" not in f:
+            label_array.append(np.array(hf.sliderPre(os.path.join(DATA_PATH_FOR_LABELS,f),3)))
+    else:
+        if "emo" not in f:
+            label_array.append(np.array(hf.sliderPre(os.path.join(DATA_PATH_FOR_LABELS,f),3)))
 label_array=np.array(label_array)
-#Takes all the names of the nii files and preprocesses them into data for the
-#LSTM
-'''
 
-'''
+####Takes all the names of the nii files and preprocesses them into data for the LSTM###
+
+#True when creating data to be preprocessed and saved
 saving=False
-largeTrain=False
+if saving:
+    count=0
+    for f in os.listdir(DATA_PATH_FOR_NII):
+        count+=1
+        hf.savePreNii(os.path.join(DATA_PATH_FOR_NII,f),f + str(count))
+#Used with otherNii when checking individual ROIS
+ROITrain=False
+#Using Saved Data or not using
+useSaved=True
 nii_array=[]
 count=0
-for f in os.listdir(DATA_PATH_FOR_NII):
-    count+=1
-    if saving:
-        hf.savePreNii(os.path.join(DATA_PATH_FOR_NII,f),f + str(count))
-    else: 
-        if largeTrain:
-            nii_array.append(hf.loadPreNii(os.path.join(DATA_PATH_FOR_PRENII,f+str(count)+".npy")))
-        else:
+for f in os.listdir(DATA_PATH_FOR_NII): 
+    if useSaved:
+        nii_array.append(hf.loadPreNii(os.path.join(DATA_PATH_FOR_PRENII,f+str(count)+".npy")))
+    else:
+        if ROITrain:
             outArray,sizeValue=(hf.otherNii(os.path.join(DATA_PATH_FOR_NII,f),1))
+            nii_array.append(np.array(outArray))
+        else:
+            outoutArray,sizeValue=(hf.NiitoTS(os.path.join(DATA_PATH_FOR_NII,f),1))
             nii_array.append(np.array(outArray))
     
 
@@ -120,20 +129,18 @@ MAX_SLIDER_VALUE=127
 EPOCHS=1
 BATCH_SIZE=1
 LOSS='binary_crossentropy'
-OPTIMIZER='RMSprop'
+OPTIMIZER='Adam'
 inputShape=(495,sizeValue)
 
 
 model=Sequential()
 model.add(LSTM(units=495, activation=keras.layers.LeakyReLU(alpha=.025),dropout=.08,input_shape=(495,20112),return_sequences=True))
-#model.add(Dense(2,activation='softmax'))
 model.add(keras.layers.TimeDistributed(Dense(2,activation='softmax')))
-#import pdb; pdb.set_trace()
+
 model.compile(loss=LOSS,optimizer=OPTIMIZER, metrics=['acc','mae'])
 
 model.fit(train_subset_nii,train_subset_labels,epochs=EPOCHS,batch_size=BATCH_SIZE)
 
-#import pdb;pdb.set_trace()
 """
 --------------------------------------
 Data Visualization/Results/Extra Modifications
@@ -141,7 +148,16 @@ Data Visualization/Results/Extra Modifications
 """
 print(model.summary())
 prediction=model.predict(test_subset_nii,verbose=1,batch_size=1)
-
 score=model.evaluate(test_subset_nii,test_subset_labels,verbose=1, batch_size=1)
 
+if enjoy:
+    print("Using enjoyment files, predicting on 1 file")
+    print(prediction)
+    print("Using enjoyment files, evaluating on 1 file")
+    print(score)
+else:
+    print("Using sadness files, predicting on 1 file")
+    print(prediction)
+    print("Using sadness file, evaluating on 1 file")
+    print(score)
 import pdb;pdb.set_trace()
