@@ -54,6 +54,12 @@ hf.savePreNii(niiname,"testingsave")
 timeseries=hf.loadPreNii("testingsave.npy")
 print(timeseries.shape)
 
+# remove cerebellum based on coordinates
+# for voxel in niiname:
+#   if voxel[y]<60 and voxel[z]<24:
+#       niiname.remove(voxel)
+
+# gray matter mask, might remove cerebellum by itself
 # grayMatterMasked = hf.greyMatter(niiname)
 # change niiname to grayMattterMasked in line 60
 
