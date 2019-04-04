@@ -54,6 +54,9 @@ hf.savePreNii(niiname,"testingsave")
 timeseries=hf.loadPreNii("testingsave.npy")
 print(timeseries.shape)
 
+# grayMatterMasked = hf.greyMatter(niiname)
+# change niiname to grayMattterMasked in line 60
+
 timeSeries=hf.niiToTS(niiname)
 print(timeSeries.shape)
 
