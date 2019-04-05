@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """
 Created on Fri Feb  1 19:51:13 2019
 
@@ -57,14 +58,8 @@ def sliderPre(filename,method):
             outputarray.append(np.median(fullarray)/maxValue)
     content.close()
     return outputarray
+    
 
-# def grayMatter(fileName):
-#     grey_matter_masker = nilearn.masking.compute_gray_matter_mask(fileName, threshold, connected=True, opening=2, memory=None, verbose=0)
-#     masked = grey_matter_masker.transform(fileName)
-    
-#     return masked 
-    
-    
 def niiToTS(filename):
     """
     Takes 4D .nii file and makes it into a 2D time series
@@ -72,14 +67,15 @@ def niiToTS(filename):
 
          
     #nifti_masker=nilearn.input_data.NiftiMasker(standardize=True, mask_strategy='epi')
-    nifti_masker=nilearn.input_data.NiftiMasker(standardize=True, mask_strategy='background',smoothing_fwhm=8)   
-
+    nifti_masker=nilearn.input_data.NiftiMasker(standardize=True, mask_strategy='template')
     nifti_masker.fit(filename)
     masked=nifti_masker.transform(filename)
     masked=np.array(masked)
+    print(masked.shape[1])
+ 
     #np.pad(masked,(0,359320-masked.shape[1]),'constant')
     
-    newmasked=np.zeros((495,359320))
+    newmasked=np.zeros((495,250000))
     #redo this with np.pad
     for i in range(495):
         for j in range(masked.shape[1]):

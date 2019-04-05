@@ -54,15 +54,6 @@ hf.savePreNii(niiname,"testingsave")
 timeseries=hf.loadPreNii("testingsave.npy")
 print(timeseries.shape)
 
-# remove cerebellum based on coordinates
-# for voxel in niiname:
-#   if voxel[y]<60 and voxel[z]<24:
-#       niiname.remove(voxel)
-
-# gray matter mask, might remove cerebellum by itself
-# grayMatterMasked = hf.greyMatter(niiname)
-# change niiname to grayMattterMasked in line 60
-
 timeSeries=hf.niiToTS(niiname)
 print(timeSeries.shape)
 
@@ -73,19 +64,31 @@ print(timeSeries.shape)
 '''
 
 
-
+DELAY=5.5
 niiname=os.path.join(DATA_PATH_FOR_NII,"sub-01_sadln_filtered_func_200hpf_cut20_standard.nii")
 
 #Takes all the names of the label files and preprocesses them into data for the LSTM
 label_array=[]
 #Deciding whether to use enjoyment or sadness labels
-enjoy=False;
+moveon=False
+while not moveon:
+    userInp=input("To Use sadness data input S or to use Enjoyment Data input E:")
+    userInp=userInp.upper()
+    if userInp=="S":
+        enjoy=False
+        moveon=True
+    elif userInp=="E":
+        enjoy=True
+        moveon=True
+    else:
+        print("Try another input ya dingus")
+
 for f in os.listdir(DATA_PATH_FOR_LABELS):
     if enjoy:
-        if "enjoy" not in f:
+        if "emo" not in f:
             label_array.append(np.array(hf.sliderPre(os.path.join(DATA_PATH_FOR_LABELS,f),3)))
     else:
-        if "emo" not in f:
+        if "enjoy" not in f:
             label_array.append(np.array(hf.sliderPre(os.path.join(DATA_PATH_FOR_LABELS,f),3)))
 label_array=np.array(label_array)
 
@@ -101,18 +104,20 @@ if saving:
 #Used with otherNii when checking individual ROIS
 ROITrain=False
 #Using Saved Data or not using
-useSaved=True
+useSaved=False
 nii_array=[]
-count=0
+count=1
 for f in os.listdir(DATA_PATH_FOR_NII): 
     if useSaved:
-        nii_array.append(hf.loadPreNii(os.path.join(DATA_PATH_FOR_PRENII,f+str(count)+".npy")))
+        t=hf.loadPreNii(os.path.join(DATA_PATH_FOR_PRENII,f+str(1)+".npy"))
+        sizeValue=t.shape[1]
+        nii_array.append(t)
     else:
         if ROITrain:
             outArray,sizeValue=(hf.otherNii(os.path.join(DATA_PATH_FOR_NII,f),1))
             nii_array.append(np.array(outArray))
         else:
-            outoutArray,sizeValue=(hf.NiitoTS(os.path.join(DATA_PATH_FOR_NII,f),1))
+            outArray,sizeValue=(hf.niiToTS(os.path.join(DATA_PATH_FOR_NII,f)))
             nii_array.append(np.array(outArray))
     
 
@@ -143,7 +148,7 @@ inputShape=(495,sizeValue)
 
 
 model=Sequential()
-model.add(LSTM(units=495, activation=keras.layers.LeakyReLU(alpha=.025),dropout=.08,input_shape=(495,20112),return_sequences=True))
+model.add(LSTM(units=495, activation=keras.layers.LeakyReLU(alpha=.025),dropout=.08,input_shape=(495,sizeValue),return_sequences=True))
 model.add(keras.layers.TimeDistributed(Dense(2,activation='softmax')))
 
 model.compile(loss=LOSS,optimizer=OPTIMIZER, metrics=['acc','mae'])
