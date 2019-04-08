@@ -63,16 +63,12 @@ print(timeSeries.shape)
 
 '''
 
+DELAY=6
 
-DELAY=5.5
-niiname=os.path.join(DATA_PATH_FOR_NII,"sub-01_sadln_filtered_func_200hpf_cut20_standard.nii")
-
-#Takes all the names of the label files and preprocesses them into data for the LSTM
-label_array=[]
 #Deciding whether to use enjoyment or sadness labels
 moveon=False
 while not moveon:
-    userInp=input("To Use sadness data input S or to use Enjoyment Data input E:")
+    userInp=input("To use sadness data input s or to use enjoyment data input e: ")
     userInp=userInp.upper()
     if userInp=="S":
         enjoy=False
@@ -82,56 +78,89 @@ while not moveon:
         moveon=True
     else:
         print("Try another input ya dingus")
+'''
 
-for f in os.listdir(DATA_PATH_FOR_LABELS):
-    if enjoy:
-        if "emo" not in f:
-            label_array.append(np.array(hf.sliderPre(os.path.join(DATA_PATH_FOR_LABELS,f),3)))
-    else:
-        if "enjoy" not in f:
-            label_array.append(np.array(hf.sliderPre(os.path.join(DATA_PATH_FOR_LABELS,f),3)))
-label_array=np.array(label_array)
+-------NEW METHOD--------------------------
+For count 1-40
+Check if a label file exists, check if a niifile exists or check if preprocessed niifile exists
+Do preprocessing or load file
+add to arrays simulaneously
+'''
 
-####Takes all the names of the nii files and preprocesses them into data for the LSTM###
-
-#True when creating data to be preprocessed and saved
 saving=False
 if saving:
-    count=0
+    endnum=int(input("What is todays date? Please use mdy with no slashes or dashes: "))
     for f in os.listdir(DATA_PATH_FOR_NII):
-        count+=1
-        hf.savePreNii(os.path.join(DATA_PATH_FOR_NII,f),f + str(count))
-#Used with otherNii when checking individual ROIS
-ROITrain=False
-#Using Saved Data or not using
-useSaved=False
+        hf.savePreNii(os.path.join(DATA_PATH_FOR_NII,f),f + str(endnum))
+        
 nii_array=[]
-count=1
-for f in os.listdir(DATA_PATH_FOR_NII): 
-    if useSaved:
-        t=hf.loadPreNii(os.path.join(DATA_PATH_FOR_PRENII,f+str(1)+".npy"))
-        sizeValue=t.shape[1]
-        nii_array.append(t)
-    else:
-        if ROITrain:
-            outArray,sizeValue=(hf.otherNii(os.path.join(DATA_PATH_FOR_NII,f),1))
-            nii_array.append(np.array(outArray))
-        else:
-            outArray,sizeValue=(hf.niiToTS(os.path.join(DATA_PATH_FOR_NII,f)))
-            nii_array.append(np.array(outArray))
+label_array=[]
+useSaved=True
+ROITrain=False
+for count in range(1,40):
+    gotlabel=False
+    gotnii=False
+    if count<10:
+        count=str(0)+str(count)
     
+    #First we preprocess the nii file
+    niifile="sub-"+str(count)+"_sadln_filtered_func_200hpf_standard_aroma.nii"
 
+    if useSaved:
+        fullNii=os.path.join(DATA_PATH_FOR_PRENII,niifile+str(4619)+".npy")
+        if os.path.isfile(fullNii):
+            nii,sizeValue=hf.loadPreNii(fullNii)
+            gotnii=True
+    
+    elif ROITrain: 
+        fullNii=os.path.join(DATA_PATH_FOR_NII,niifile)
+        if os.path.isfile(fullNii):
+            nii,sizeValue=hf.otherNii(fullNii,1)
+            gotnii=True
+    else:
+        fullNii=os.path.join(DATA_PATH_FOR_NII,niifile)
+        if os.path.isfile(fullNii):
+            nii,sizeValue=hf.niiToTS(fullNii)
+            gotnii=True
+            
+    #Next up is the corresponding label data
+    if enjoy:
+        labelfile="sub-"+str(count)+"_snl_l_enjoy_log.txt"
+        fullfile=os.path.join(DATA_PATH_FOR_LABELS,labelfile)
+        if os.path.isfile(fullfile):        
+            label=np.array(hf.sliderPre(fullfile,3))
+            gotlabel=True 
+           
+             
+    else:
+        labelfile="sub-"+str(count)+"_snl_l_emo_log.txt"
+        fullfile=os.path.join(DATA_PATH_FOR_LABELS,labelfile)
+        if os.path.isfile(fullfile):
+            label=np.array(hf.sliderPre(fullfile,3))
+            gotlabel=True
+
+    if gotlabel and gotnii:
+        nii_array.append(nii)
+        label_array.append(label)
+
+nii_array=np.array(nii_array)
+label_array=np.array(label_array)
+
+
+
+print(nii_array.shape)
+print(label_array.shape)
 
 
 #Global variable for percent to train on, test on and validate on
 TRAIN_TEST_SPLIT=[.75,.25]
 totalFiles=len(label_array)
 
-train_subset_labels,test_subset_labels,train_subset_nii,test_subset_nii=train_test_split(label_array,nii_array,train_size=TRAIN_TEST_SPLIT[0],test_size=TRAIN_TEST_SPLIT[1])
-train_subset_labels=np.array(train_subset_labels)
-train_subset_nii=np.array(train_subset_nii)
-test_subset_labels=np.array(test_subset_labels)
-test_subset_nii=np.array(test_subset_nii)
+train_labels,test_labels,train_nii,test_nii=train_test_split(label_array,nii_array,train_size=TRAIN_TEST_SPLIT[0],test_size=TRAIN_TEST_SPLIT[1])
+train_labels=np.array(train_labels)
+train_nii=np.array(train_nii)
+test_labels=np.array(test_labels)
+test_nii=np.array(test_nii)
 
 """
 --------------------------------------
@@ -139,21 +168,20 @@ THE MODEL HERSELF (11/10 dont tell my girlfriend)
 --------------------------------------
 """
 #HyperParameters
-MAX_SLIDER_VALUE=127
-EPOCHS=1
-BATCH_SIZE=1
+EPOCHS=8 #Probably should be changed
+BATCH_SIZE=5 
 LOSS='binary_crossentropy'
 OPTIMIZER='Adam'
-inputShape=(495,sizeValue)
+inputShape=(495-DELAY,sizeValue)
 
 
 model=Sequential()
-model.add(LSTM(units=495, activation=keras.layers.LeakyReLU(alpha=.025),dropout=.08,input_shape=(495,sizeValue),return_sequences=True))
+model.add(LSTM(units=inputShape[0], activation=keras.layers.LeakyReLU(alpha=.025),dropout=.08,input_shape=inputShape,return_sequences=True))
 model.add(keras.layers.TimeDistributed(Dense(2,activation='softmax')))
 
-model.compile(loss=LOSS,optimizer=OPTIMIZER, metrics=['acc','mae'])
+model.compile(loss=LOSS,optimizer=OPTIMIZER, metrics=['mean_squared_error'])
 
-model.fit(train_subset_nii,train_subset_labels,epochs=EPOCHS,batch_size=BATCH_SIZE)
+model.fit(train_nii,train_labels,epochs=EPOCHS,batch_size=BATCH_SIZE)
 
 """
 --------------------------------------
@@ -161,8 +189,8 @@ Data Visualization/Results/Extra Modifications
 --------------------------------------
 """
 print(model.summary())
-prediction=model.predict(test_subset_nii,verbose=1,batch_size=1)
-score=model.evaluate(test_subset_nii,test_subset_labels,verbose=1, batch_size=1)
+prediction=model.predict(test_nii,verbose=1,batch_size=4)
+score=model.evaluate(test_nii,test_labels,verbose=1, batch_size=4)
 
 if enjoy:
     print("Using enjoyment files, predicting on 1 file")

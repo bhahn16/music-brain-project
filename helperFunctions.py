@@ -17,6 +17,7 @@ from nilearn.masking import compute_epi_mask
 from nilearn.plotting import plot_epi
 from nilearn.input_data import NiftiMasker
 from sklearn.preprocessing import OneHotEncoder
+DELAY=6
 
 def sliderPre(filename,method):
     """
@@ -26,6 +27,12 @@ def sliderPre(filename,method):
         2-Min
         3-Average
         4-Median
+        
+        
+        TODO:
+            Cut off last 6 seconds-DONE-LINE 46
+            
+        
     """
     content=open(filename,'r')
     content1=content.read().split("\n")
@@ -41,7 +48,8 @@ def sliderPre(filename,method):
     maxValue=127
     outputarray=[]
     methodselector=method
-    for i in range(20,515):
+  #  for i in range(20,515):
+    for i in range(20,515-DELAY): 
         fullarray=np.array(sliderValue[30*i:30*i+29]).astype(np.float)
         if methodselector==1:
             outputarray.append(max(fullarray)/maxValue)
@@ -63,27 +71,33 @@ def sliderPre(filename,method):
 def niiToTS(filename):
     """
     Takes 4D .nii file and makes it into a 2D time series
+    TODO:
+        Chop off first 6 second -USES indexer and Index_img
+        Figure how much to pad-no need, all data is 229,007
+        Save all good preprocessed data on team drive
+        
     """
 
          
     #nifti_masker=nilearn.input_data.NiftiMasker(standardize=True, mask_strategy='epi')
     nifti_masker=nilearn.input_data.NiftiMasker(standardize=True, mask_strategy='template')
-    nifti_masker.fit(filename)
-    masked=nifti_masker.transform(filename)
+    indexer=[i for i in range(0,495-DELAY)]
+    result=nilearn.image.index_img(filename,indexer)
+    nifti_masker.fit(result)
+    masked=nifti_masker.transform(result)
     masked=np.array(masked)
-    print(masked.shape[1])
+    #print(masked.shape)
+
  
     #np.pad(masked,(0,359320-masked.shape[1]),'constant')
-    
+    '''
     newmasked=np.zeros((495,250000))
     #redo this with np.pad
     for i in range(495):
         for j in range(masked.shape[1]):
             newmasked[i][j]=masked[i][j]
-            
-   # boole=np.array_equal(newmasked,masked)
-   #  print(boole)
-    return newmasked,newmasked.shape[1]
+   '''       
+    return masked,masked.shape[1]
     
 
 def savePreNii(filename,outputname):
@@ -96,7 +110,10 @@ def loadPreNii(filename):
     """
     Loads a preprocessed NII file from savePreNii
     """
-    return np.load(filename)
+    matrix=np.load(filename)
+    matrix=matrix[0][:][:]
+    #import pdb;pdb.set_trace()
+    return matrix,matrix.shape[1]
 
 def otherNii(filename,timepoint):
     '''
@@ -115,3 +132,14 @@ def otherNii(filename,timepoint):
     masked_data=nilearn.masking.apply_mask(filename,mask_img)
     return masked_data,masked_data.shape[1]
 
+
+def randtestfctn():
+    DATA_PATH_FOR_NII=r"C:\Users\Ted\Desktop\CAIS_MUSIC_BRAIN\NII-Files"
+    niiname2=os.path.join(DATA_PATH_FOR_NII,"sub-01_sadln_filtered_func_200hpf_cut20_standard.nii")
+    indexer=[i for i in range(2,480)]
+    result=nilearn.image.index_img(niiname2,indexer)
+    #import pdb;pdb.set_trace()
+    nextimg=nilearn.image.index_img(niiname2,4)
+    
+    result=nilearn.image.concat_imgs([result,nextimg])
+    print(result.shape)
