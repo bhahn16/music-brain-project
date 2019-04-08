@@ -19,6 +19,7 @@ from keras.layers.recurrent import LSTM
 import nilearn
 import os
 from sklearn.model_selection import train_test_split
+from sklearn import preprocessing
 
 server=False
 if server:
@@ -93,6 +94,8 @@ if saving:
     for f in os.listdir(DATA_PATH_FOR_NII):
         hf.savePreNii(os.path.join(DATA_PATH_FOR_NII,f),f + str(endnum))
         
+        
+        
 nii_array=[]
 label_array=[]
 useSaved=True
@@ -110,6 +113,7 @@ for count in range(1,40):
         fullNii=os.path.join(DATA_PATH_FOR_PRENII,niifile+str(4619)+".npy")
         if os.path.isfile(fullNii):
             nii,sizeValue=hf.loadPreNii(fullNii)
+            #nii=preprocessing.scale(nii)
             gotnii=True
     
     elif ROITrain: 
@@ -121,6 +125,7 @@ for count in range(1,40):
         fullNii=os.path.join(DATA_PATH_FOR_NII,niifile)
         if os.path.isfile(fullNii):
             nii,sizeValue=hf.niiToTS(fullNii)
+            #nii=preprocessing.scale(nii)
             gotnii=True
             
     #Next up is the corresponding label data
@@ -168,7 +173,7 @@ THE MODEL HERSELF (11/10 dont tell my girlfriend)
 --------------------------------------
 """
 #HyperParameters
-EPOCHS=8 #Probably should be changed
+EPOCHS=4 #Probably should be changed
 BATCH_SIZE=5 
 LOSS='binary_crossentropy'
 OPTIMIZER='Adam'
@@ -176,10 +181,10 @@ inputShape=(495-DELAY,sizeValue)
 
 
 model=Sequential()
-model.add(LSTM(units=inputShape[0], activation=keras.layers.LeakyReLU(alpha=.025),dropout=.08,input_shape=inputShape,return_sequences=True))
+model.add(LSTM(units=inputShape[0], activation='tanh',dropout=.08,input_shape=inputShape,return_sequences=True))
 model.add(keras.layers.TimeDistributed(Dense(2,activation='softmax')))
 
-model.compile(loss=LOSS,optimizer=OPTIMIZER, metrics=['mean_squared_error'])
+model.compile(loss=LOSS,optimizer=OPTIMIZER, metrics=['acc','mean_squared_error'])
 
 model.fit(train_nii,train_labels,epochs=EPOCHS,batch_size=BATCH_SIZE)
 
@@ -193,13 +198,13 @@ prediction=model.predict(test_nii,verbose=1,batch_size=4)
 score=model.evaluate(test_nii,test_labels,verbose=1, batch_size=4)
 
 if enjoy:
-    print("Using enjoyment files, predicting on 1 file")
+    print("Using enjoyment files, predicting on test files")
     print(prediction)
-    print("Using enjoyment files, evaluating on 1 file")
+    print("Using enjoyment files, evaluating on test files")
     print(score)
 else:
-    print("Using sadness files, predicting on 1 file")
+    print("Using sadness files, predicting on test files")
     print(prediction)
-    print("Using sadness file, evaluating on 1 file")
+    print("Using sadness file, evaluating on test files")
     print(score)
 import pdb;pdb.set_trace()

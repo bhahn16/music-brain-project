@@ -16,7 +16,8 @@ from nilearn import image
 from nilearn.masking import compute_epi_mask
 from nilearn.plotting import plot_epi
 from nilearn.input_data import NiftiMasker
-from sklearn.preprocessing import OneHotEncoder
+from sklearn import preprocessing
+
 DELAY=6
 
 def sliderPre(filename,method):
@@ -42,6 +43,7 @@ def sliderPre(filename,method):
     #import pdb; pdb.set_trace()
     for i in range(0,len(content1)-1):
         times.append(content1[i].split("\t")[0])
+        
         sliderValue.append(content1[i].split("\t")[1])  
     
 
@@ -134,6 +136,7 @@ def otherNii(filename,timepoint):
 
 
 def randtestfctn():
+    
     DATA_PATH_FOR_NII=r"C:\Users\Ted\Desktop\CAIS_MUSIC_BRAIN\NII-Files"
     niiname2=os.path.join(DATA_PATH_FOR_NII,"sub-01_sadln_filtered_func_200hpf_cut20_standard.nii")
     indexer=[i for i in range(2,480)]
@@ -143,3 +146,45 @@ def randtestfctn():
     
     result=nilearn.image.concat_imgs([result,nextimg])
     print(result.shape)
+def randtestfctn2():
+    filename=r"C:\Users\Ted\Desktop\CAIS_MUSIC_BRAIN\Preprocessed_Files\sub-31_sadln_filtered_func_200hpf_standard_aroma.nii4619.npy"
+    matrix,shp=loadPreNii(filename)
+    import matplotlib.pyplot as plt
+    #import pdb;pdb.set_trace()
+    somenums=np.linspace(0,489,num=489)
+    plt.figure(2,figsize=(12,12))
+    plt.subplot(221)
+    plt.plot(somenums,matrix[:,220000])
+    plt.xlabel("Time")
+    plt.ylabel("Activation")
+    plt.subplot(222)
+  
+    max_array=[]
+    for i in range (229007):
+        max_array.append(np.amax(matrix[:,i]))
+    othernums=np.linspace(0,shp,num=shp)
+    plt.plot(othernums,max_array)
+    plt.xlabel("Feature")
+    plt.ylabel("Max Activation for feature")
+    plt.subplot(223)
+    min_array=[]
+    for i in range (229007):
+        min_array.append(np.amin(matrix[:,i]))
+    othernums=np.linspace(0,shp,num=shp)
+    plt.plot(othernums,min_array)
+    plt.xlabel("Feature")
+    plt.ylabel("Min Activation for feature")
+    plt.subplot(224)
+    diff_array=[]
+    count=0;
+    for i in range(229007):
+        num=max_array[i]-min_array[i]
+        if num<=0.1:
+            count+=1
+        diff_array.append(num)
+    plt.plot(othernums,diff_array)
+    plt.xlabel("Feature")
+    plt.ylabel("Max-Min Activation for feature")
+    plt.show()
+    print(count)
+#randtestfctn2()
