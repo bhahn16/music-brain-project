@@ -146,7 +146,7 @@ def randtestfctn():
     
     result=nilearn.image.concat_imgs([result,nextimg])
     print(result.shape)
-def randtestfctn2():
+def preproVis():
     filename=r"C:\Users\Ted\Desktop\CAIS_MUSIC_BRAIN\Preprocessed_Files\sub-31_sadln_filtered_func_200hpf_standard_aroma.nii4619.npy"
     matrix,shp=loadPreNii(filename)
     import matplotlib.pyplot as plt
@@ -176,15 +176,17 @@ def randtestfctn2():
     plt.ylabel("Min Activation for feature")
     plt.subplot(224)
     diff_array=[]
+    index_array=[]
     count=0;
     for i in range(229007):
         num=max_array[i]-min_array[i]
         if num<=0.1:
             count+=1
+            index_array.append(i)
         diff_array.append(num)
     plt.plot(othernums,diff_array)
     plt.xlabel("Feature")
     plt.ylabel("Max-Min Activation for feature")
     plt.show()
     print(count)
-#randtestfctn2()
+    return index_array
