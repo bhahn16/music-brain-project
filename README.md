@@ -1,4 +1,4 @@
-<h1>Music Brain Project</h1>
+<h1>Music Brain Project: CAIS ++ Spring 2019</h1>
 <h2> Can we predict how happy or sad music makes you? </h2>
 <p>  
 We explore how humans react to instrumental using artificial intelligence in partnership with the Brain and Creativity Insistute at USC.
