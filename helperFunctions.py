@@ -19,7 +19,46 @@ from nilearn.input_data import NiftiMasker
 from sklearn import preprocessing
 
 DELAY=6
-
+def load_txt_file(filename):
+    try:
+        fileobj=open(filename,'r')
+    except IOError:
+        print("Bad File path!")
+    with fileobj:
+        values = split_txt(fileobj)
+        return values
+def split_txt(fobj):
+    indiv_lines = fobj.read().split("\n")
+    values = []
+    for i in range(len(indiv_lines)):
+        values.append(indiv_lines[i].split("\t")[1])
+    return values
+def downsample(values, num_buckets, delay):
+    '''
+    Downsamples from 30Hz to 1Hz and Scales them from [0,127] to [0,1]
+    After, creates a one hot encoding 
+    '''
+    maxValue = 127
+    labels=[]
+    for i in range(20,515-delay): 
+        #Get the average of the 30 slider points each second
+        sec_arr=np.array(values[30*i:30*i+29]).astype(np.float)
+        #Scale the values to be between 0 and 1
+        sec_avg=np.average(sec_arr)/maxValue
+        #Create One Hot Encoding Vector
+        one_hot = [0]* num_buckets
+        #Calculate which bucket the current datapoint should fit in
+        index = int(np.floor(sec_avg*num_buckets))
+        one_hot[index] = 1
+        
+        labels.append(one_hot)
+    return labels
+def preprocess_slider_file(fname,method):
+    fobj = load_txt_file(fname)
+    vals = split_txt(fobj)
+    delay = 6
+    scaled_vals = downsample(vals,method,delay)
+    return scaled_vals
 def sliderPre(filename,method):
     """
     filename: File Name of text file
