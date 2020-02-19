@@ -1,8 +1,14 @@
-# Music Brain Project: CAIS ++ Spring 2019
-## Can we predict how happy or sad music makes you?
- 
-**Authors:** Ted Lewitt, Ben Hahn, Jack Elliott <br>
+<h1>Music Brain Project: CAIS ++ Spring 2019</h1>
+<h2> Can we predict how happy or sad music makes you? </h2>
+<p>  
+We explore how humans react to instrumental using artificial intelligence in partnership with the Brain and Creativity Insistute at USC.
 
-We use deep learning to predict human's emotional response to instrumental music in partnership with the Brain and Creativity Insistute at USC.
+**Our data:** 36 subjects listened to music for 6 minutes inside an MRI machine
 
-Check out *music_brain_project.ipynb* for our work and follow this [Link](https://www.slideshare.net/slideshow/embed_code/key/4EVG3rRu8nNaO) for our presentation!
+**Our methods:** We preproccessed with nilearn and used an Keras LSTM to output a multi-class classification based on how happy or sad a participant was while listening to the music.
+
+
+
+**Authors:** Ted Lewitt, Ben Hahn, Jack Elliott
+
+</p>
